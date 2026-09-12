@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>BloodScan AI — Prototype v0.2</title>
+<title>BloodScan AI — Prototype v0.2.2</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap');
 
@@ -20,6 +20,8 @@
     --amber-tint: #FBF1DF;
     --danger: #A93A2E;
     --danger-tint: #F7E9E6;
+    --violet: #6B4FA1;
+    --violet-tint: #EFEBF8;
     --focus: #1B6E63;
   }
 
@@ -55,8 +57,8 @@
     background: var(--danger-tint);
     border-bottom: 1px solid var(--danger);
     color: var(--danger);
-    padding: 10px 16px;
-    font-size: 12.5px;
+    padding: 8px 16px;
+    font-size: 11.5px;
     line-height: 1.45;
     display:flex;
     gap:8px;
@@ -65,7 +67,7 @@
   /* ---- hero ---- */
   .hero{
     position: relative;
-    height: 190px;
+    height: 170px;
     overflow: hidden;
     background: linear-gradient(135deg, #0F3D37 0%, #5C1C17 65%, #7A1F1B 100%);
     flex-shrink: 0;
@@ -73,10 +75,10 @@
   .hero-canvas{ position:absolute; inset:0; }
   .hero-canvas canvas{ display:block; width:100% !important; height:100% !important; }
   .hero-copy{
-    position:absolute; left:20px; bottom:16px; z-index:2; color:#fff;
+    position:absolute; left:20px; bottom:14px; z-index:2; color:#fff;
     text-shadow: 0 2px 12px rgba(0,0,0,0.4);
   }
-  .hero-copy .title{ font-size:25px; font-weight:700; letter-spacing:-0.01em; }
+  .hero-copy .title{ font-size:24px; font-weight:700; letter-spacing:-0.01em; }
   .hero-copy .subtitle{ font-size:11.5px; font-family:'IBM Plex Mono', monospace; opacity:0.92; margin-top:5px; }
   .hero .lang-toggle{
     position:absolute; top:14px; right:16px; z-index:2;
@@ -87,23 +89,27 @@
   .lang-toggle{ display:flex; border:1px solid var(--line); border-radius: 20px; overflow:hidden; height: fit-content; }
   .lang-toggle button{ background: var(--panel); border:none; padding:6px 12px; font-size:12px; color: var(--ink-soft); cursor:pointer; }
 
-  /* ---- tabs ---- */
+  /* ---- tabs (colorful per tool) ---- */
   nav.tabs{ display:flex; border-bottom: 1px solid var(--line); }
   nav.tabs button{
-    flex:1; background:none; border:none; padding: 12px 0; font-size: 13.5px; font-weight:600;
+    flex:1; background:none; border:none; padding: 11px 0 10px; font-size: 12.5px; font-weight:600;
     color: var(--ink-soft); cursor:pointer; border-bottom: 3px solid transparent;
+    display:flex; flex-direction:column; align-items:center; gap:3px;
   }
-  nav.tabs button.active{ color: var(--teal-dark); border-bottom-color: var(--teal); }
+  nav.tabs button .ico{ font-size:16px; line-height:1; }
+  nav.tabs button.active{ color: var(--tab-c, var(--teal-dark)); border-bottom-color: var(--tab-c, var(--teal)); }
+  nav.tabs button.active .ico{ transform: scale(1.15); }
 
-  main{ flex:1; padding: 18px 20px 100px; }
+  main{ flex:1; padding: 16px 20px 90px; }
   section.view{ display:none; }
   section.view.active{ display:block; animation: reveal 0.35s ease; }
   @keyframes reveal{ from{ opacity:0; transform: translateY(4px);} to{ opacity:1; transform:none; } }
 
   /* ---- capture frame ---- */
   .capture{
-    position: relative; aspect-ratio: 4/3; background: #0F1512; border-radius: 6px; overflow: hidden;
+    position: relative; aspect-ratio: 4/3; background: #0F1512; border-radius: 10px; overflow: hidden;
     display:flex; align-items:center; justify-content:center;
+    box-shadow: 0 6px 18px rgba(15,61,55,0.18);
   }
   .capture video, .capture img{ width:100%; height:100%; object-fit: cover; display:block; }
   .capture .empty{ color:#C9D3CE; font-size:12.5px; text-align:center; padding: 0 30px; font-family:'IBM Plex Mono', monospace; }
@@ -111,21 +117,19 @@
   .brackets svg{ width:100%; height:100%; }
   .brackets path{ stroke:#EDEAD9; stroke-width:2.5; fill:none; opacity:0.85; }
 
-  /* reaction-zone frame overlay (live mode) */
   .zoneframe{ position:absolute; inset:14px; pointer-events:none; display:none; }
   .zoneframe.show{ display:block; }
   .zf-box{
     position:absolute; top:12%; bottom:12%; width:28%;
     border:1.5px dashed rgba(237,234,217,0.55); border-radius:6px;
   }
-  .zf-box.zA{ left:3%; } .zf-box.zB{ left:36%; } .zf-box.zD{ right:3%; }
+  .zf-box.zA{ left:3%; border-color:rgba(76,175,125,0.75); } .zf-box.zB{ left:36%; border-color:rgba(224,162,51,0.75); } .zf-box.zD{ right:3%; border-color:rgba(255,138,122,0.75); }
   .zf-box span{
     position:absolute; top:6px; left:50%; transform:translateX(-50%);
     font-size:9.5px; font-family:'IBM Plex Mono', monospace; color:#0F1512;
     background:rgba(237,234,217,0.85); padding:2px 6px; border-radius:4px; white-space:nowrap;
   }
 
-  /* live quality HUD */
   .hud{ position:absolute; left:8px; right:8px; bottom:8px; display:none; gap:5px; flex-wrap:wrap; pointer-events:none; }
   .hud.show{ display:flex; }
   .chip{
@@ -138,22 +142,30 @@
   .chip.warn{ border-color:#E0A233; }
   .chip.bad{ border-color:#FF8A7A; color:#FFC0B5; }
 
+  /* auto-capture progress */
+  .autodots{ position:absolute; top:10px; left:0; right:0; display:none; justify-content:center; gap:6px; pointer-events:none; }
+  .autodots.show{ display:flex; }
+  .autodots i{
+    width:9px; height:9px; border-radius:50%; background:rgba(237,234,217,0.3); border:1px solid rgba(237,234,217,0.5);
+  }
+  .autodots i.on{ background:#4CAF7D; border-color:#4CAF7D; box-shadow:0 0 6px rgba(76,175,125,0.8); }
+
   .capture-controls{ display:flex; gap:10px; margin-top: 12px; }
   .btn{
-    flex:1; padding: 12px 10px; border-radius: 8px; border:1px solid var(--line);
+    flex:1; padding: 12px 10px; border-radius: 10px; border:1px solid var(--line);
     background: var(--panel); color: var(--ink); font-size: 13.5px; font-weight:600; cursor:pointer;
     display:flex; align-items:center; justify-content:center; gap:7px;
   }
-  .btn.primary{ background: linear-gradient(135deg,var(--teal),var(--teal-dark)); border-color: var(--teal-dark); color:#fff; }
-  .btn.danger{ background: linear-gradient(135deg,#A93A2E,#7A271E); border-color:#7A271E; color:#fff; }
+  .btn.primary{ background: linear-gradient(135deg,var(--teal),var(--teal-dark)); border-color: var(--teal-dark); color:#fff; box-shadow: 0 4px 12px rgba(27,110,99,0.25); }
+  .btn.violet{ background: linear-gradient(135deg,#7A5CB8,var(--violet)); border-color: var(--violet); color:#fff; }
   .btn:disabled{ opacity:0.45; cursor:not-allowed; }
   .hide{ display:none !important; }
   input[type=file]{ display:none; }
-  .live-hint{ font-size:12px; color:var(--ink-soft); margin-top:8px; display:none; }
+  .live-hint{ font-size:12px; color:var(--ink-soft); margin-top:8px; display:none; text-align:center; }
   .live-hint.show{ display:block; }
 
   /* ---- quality report ---- */
-  .card{ border:1px solid var(--line); border-radius: 8px; padding: 14px 16px; margin-top: 16px; background: var(--panel); }
+  .card{ border:1px solid var(--line); border-radius: 10px; padding: 14px 16px; margin-top: 16px; background: var(--panel); }
   .card h3{ font-size: 13px; color: var(--ink-soft); font-weight:600; margin-bottom: 10px; }
   .qrow{ display:flex; justify-content:space-between; align-items:center; padding: 6px 0; font-size: 13.5px; border-bottom: 1px dashed var(--line); }
   .qrow:last-of-type{ border-bottom:none; }
@@ -162,22 +174,22 @@
   .pill.warn{ background: var(--amber-tint); color: var(--amber); }
   .pill.bad{ background: var(--danger-tint); color: var(--danger); }
 
-  .readiness{ display:inline-flex; align-items:center; gap:7px; padding:7px 14px; border-radius:20px; font-size:12.5px; font-weight:600; margin-top:12px; color:#fff; }
-  .readiness.ready{ background: linear-gradient(90deg,#1B6E63,#2C9A87); }
-  .readiness.warn{ background: linear-gradient(90deg,#C77B12,#E0A233); }
-  .readiness.fail{ background: linear-gradient(90deg,#A93A2E,#C75C4F); }
-
-  .privacy-line{
-    margin-top:12px; font-size:11.5px; color:var(--ink-soft);
-    display:flex; align-items:center; gap:6px;
+  .readiness{
+    display:flex; align-items:center; justify-content:center; gap:8px; padding:12px 14px;
+    border-radius:14px; font-size:14.5px; font-weight:700; margin-top:12px; color:#fff;
+    box-shadow: 0 5px 14px rgba(15,61,55,0.2);
   }
+  .readiness.ready{ background: linear-gradient(135deg,#1B6E63,#2C9A87); }
+  .readiness.warn{ background: linear-gradient(135deg,#C77B12,#E0A233); }
+  .readiness.fail{ background: linear-gradient(135deg,#A93A2E,#C75C4F); }
 
-  /* ---- zones ---- */
+  .privacy-line{ margin-top:12px; font-size:11.5px; color:var(--ink-soft); display:flex; align-items:center; gap:6px; }
+
   .zones{ display:grid; grid-template-columns: repeat(3,1fr); gap:10px; margin-top: 16px; }
-  .zone{ border:1px solid var(--line); border-top-width:3px; border-radius:8px; padding: 12px 8px; text-align:center; }
-  .zone.a{ border-top-color:#1B6E63; }
-  .zone.b{ border-top-color:#C77B12; }
-  .zone.d{ border-top-color:#A93A2E; }
+  .zone{ border:1px solid var(--line); border-top-width:3px; border-radius:10px; padding: 12px 8px; text-align:center; }
+  .zone.a{ border-top-color:#1B6E63; background: linear-gradient(180deg,#F2F8F6,var(--panel)); }
+  .zone.b{ border-top-color:#C77B12; background: linear-gradient(180deg,#FCF6EC,var(--panel)); }
+  .zone.d{ border-top-color:#A93A2E; background: linear-gradient(180deg,#FAF0ED,var(--panel)); }
   .zone .label{ font-size:12px; font-weight:600; color: var(--ink-soft); }
   .zone .state{ margin-top:8px; font-size: 11px; color:#8A9490; font-family:'IBM Plex Mono',monospace; }
 
@@ -185,17 +197,24 @@
   .note.fail{ color: var(--danger); font-weight:500; }
   .save-row{ margin-top: 18px; display:flex; gap:10px; }
 
-  /* ---- history / dashboard ---- */
-  .stats-row{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom: 18px; }
-  .stat-card{ border-radius:10px; padding:13px 8px; color:#fff; text-align:center; }
-  .stat-card .num{ font-size:21px; font-weight:700; font-family:'Space Grotesk',sans-serif; }
-  .stat-card .lbl{ font-size:10px; margin-top:3px; opacity:0.92; font-family:'IBM Plex Mono',monospace; }
+  /* ---- dashboard ---- */
+  .stats-row{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom: 16px; }
+  .stat-card{ border-radius:12px; padding:14px 8px; color:#fff; text-align:center; box-shadow:0 4px 12px rgba(15,61,55,0.15); }
+  .stat-card .num{ font-size:22px; font-weight:700; font-family:'Space Grotesk',sans-serif; }
+  .stat-card .lbl{ font-size:9.5px; margin-top:3px; opacity:0.92; font-family:'IBM Plex Mono',monospace; }
   .stat-card.teal{ background:linear-gradient(135deg,#1B6E63,#0F3D37); }
   .stat-card.amber{ background:linear-gradient(135deg,#C77B12,#8A560B); }
   .stat-card.crimson{ background:linear-gradient(135deg,#A93A2E,#6E241B); }
 
-  .hist-item{ display:flex; gap:12px; border:1px solid var(--line); border-radius:8px; padding: 10px; margin-bottom: 10px; align-items:center; }
-  .hist-item img{ width:56px; height:56px; object-fit:cover; border-radius:6px; background:#eee; }
+  .chart{ display:flex; align-items:flex-end; gap:4px; height:90px; padding:12px 12px 0; border:1px solid var(--line); border-radius:12px; background: linear-gradient(180deg,#FBFCFC,var(--panel)); margin-bottom:16px; }
+  .chart .bar{ flex:1; border-radius:4px 4px 0 0; min-height:4px; }
+  .chart .bar.pass{ background:linear-gradient(180deg,#2C9A87,#1B6E63); }
+  .chart .bar.warn{ background:linear-gradient(180deg,#E0A233,#C77B12); }
+  .chart .bar.fail{ background:linear-gradient(180deg,#C75C4F,#A93A2E); }
+  .chart-empty{ font-size:12px; color:var(--ink-soft); text-align:center; padding:20px 10px; }
+
+  .hist-item{ display:flex; gap:12px; border:1px solid var(--line); border-radius:10px; padding: 10px; margin-bottom: 10px; align-items:center; background: linear-gradient(180deg,#FBFCFC,var(--panel)); }
+  .hist-item img{ width:56px; height:56px; object-fit:cover; border-radius:8px; background:#eee; }
   .hist-meta{ flex:1; min-width:0; }
   .hist-meta .ts{ font-size:12.5px; font-weight:600; }
   .hist-meta .sum{ font-size:11.5px; color: var(--ink-soft); margin-top:2px; }
@@ -205,6 +224,33 @@
   .hist-verdict.fail{ background:var(--danger-tint); color:var(--danger); }
   .hist-del{ background:none; border:none; color:var(--danger); font-size:12px; cursor:pointer; padding:6px; }
   .empty-hist{ color: var(--ink-soft); font-size: 13px; text-align:center; padding: 40px 10px; }
+
+  /* ---- lab ---- */
+  .lab-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px; }
+  .lab-cell{ border:1px solid var(--line); border-radius:10px; padding:10px 12px; }
+  .lab-cell .k{ font-size:10px; color:var(--ink-soft); font-family:'IBM Plex Mono',monospace; text-transform:uppercase; letter-spacing:0.04em; }
+  .lab-cell .v{ font-size:13px; font-weight:600; margin-top:3px; word-break:break-all; }
+
+  table.metrics{ width:100%; border-collapse:collapse; font-size:12.5px; }
+  table.metrics td{ padding:6px 4px; border-bottom:1px dashed var(--line); }
+  table.metrics td:last-child{ text-align:right; font-family:'IBM Plex Mono',monospace; }
+
+  .lab-note{ font-size:11.5px; color:var(--ink-soft); margin-top:10px; line-height:1.5; }
+
+  /* ---- guide ---- */
+  .steps{ display:flex; flex-direction:column; gap:10px; }
+  .step{ display:flex; gap:12px; align-items:flex-start; border:1px solid var(--line); border-radius:12px; padding:12px 14px; background: linear-gradient(180deg,#FBFCFC,var(--panel)); }
+  .step .n{
+    flex-shrink:0; width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center;
+    color:#fff; font-weight:700; font-size:15px; font-family:'Space Grotesk',sans-serif;
+  }
+  .step:nth-child(5n+1) .n{ background:linear-gradient(135deg,#1B6E63,#2C9A87); }
+  .step:nth-child(5n+2) .n{ background:linear-gradient(135deg,#C77B12,#E0A233); }
+  .step:nth-child(5n+3) .n{ background:linear-gradient(135deg,#A93A2E,#C75C4F); }
+  .step:nth-child(5n+4) .n{ background:linear-gradient(135deg,#7A5CB8,#6B4FA1); }
+  .step:nth-child(5n+5) .n{ background:linear-gradient(135deg,#2C6BA4,#3E8FD0); }
+  .step .t{ font-size:13px; font-weight:600; }
+  .step .d{ font-size:12px; color:var(--ink-soft); margin-top:3px; line-height:1.5; }
 
   footer{
     border-top:1px solid var(--line); padding: 12px 20px; overflow-x:auto; white-space:nowrap; background: var(--panel);
@@ -237,12 +283,22 @@
   </div>
 
   <nav class="tabs">
-    <button id="tab-scan-btn" class="active" data-i18n="tabScan"></button>
-    <button id="tab-history-btn" data-i18n="tabHistory"></button>
+    <button id="tab-scan-btn" class="active" style="--tab-c:#1B6E63">
+      <span class="ico">📷</span><span data-i18n="tabScan"></span>
+    </button>
+    <button id="tab-lab-btn" style="--tab-c:#A93A2E">
+      <span class="ico">🔬</span><span data-i18n="tabLab"></span>
+    </button>
+    <button id="tab-dash-btn" style="--tab-c:#C77B12">
+      <span class="ico">📊</span><span data-i18n="tabDash"></span>
+    </button>
+    <button id="tab-guide-btn" style="--tab-c:#6B4FA1">
+      <span class="ico">🧭</span><span data-i18n="tabGuide"></span>
+    </button>
   </nav>
 
   <main>
-    <!-- SCAN VIEW -->
+    <!-- ============ SCAN VIEW ============ -->
     <section id="view-scan" class="view active">
       <div class="capture" id="captureBox">
         <video id="video" playsinline muted style="display:none"></video>
@@ -261,6 +317,7 @@
           <div class="zf-box zB"><span>Anti-B</span></div>
           <div class="zf-box zD"><span>Anti-D</span></div>
         </div>
+        <div class="autodots" id="autoDots"><i></i><i></i><i></i></div>
         <div class="hud" id="hud"></div>
       </div>
 
@@ -302,11 +359,46 @@
       </div>
     </section>
 
-    <!-- HISTORY VIEW -->
-    <section id="view-history" class="view">
+    <!-- ============ LAB VIEW ============ -->
+    <section id="view-lab" class="view">
+      <div class="lab-grid">
+        <div class="lab-cell"><div class="k" data-i18n="labPlatform"></div><div class="v" id="labPlatform">—</div></div>
+        <div class="lab-cell"><div class="k" data-i18n="labScreen"></div><div class="v" id="labScreen">—</div></div>
+        <div class="lab-cell"><div class="k" data-i18n="labCamera"></div><div class="v" id="labCamera">—</div></div>
+        <div class="lab-cell"><div class="k" data-i18n="labTorch"></div><div class="v" id="labTorch">—</div></div>
+      </div>
+
+      <div class="capture-controls" style="margin-top:0">
+        <button class="btn" id="btnLabCapture" data-i18n="btnLabCapture"></button>
+      </div>
+
+      <div class="card" id="labReportCard" style="display:none">
+        <h3 data-i18n="labReportTitle"></h3>
+        <table class="metrics" id="labReportTable"></table>
+        <div class="capture-controls" style="margin-top:12px">
+          <button class="btn violet" id="btnCopyReport" data-i18n="btnCopyReport"></button>
+        </div>
+        <p class="lab-note" data-i18n="labNote"></p>
+      </div>
+
+      <div class="card" id="labHistoryCard" style="display:none">
+        <h3 data-i18n="labHistoryTitle"></h3>
+        <div id="labHistoryList"></div>
+      </div>
+    </section>
+
+    <!-- ============ DASHBOARD VIEW ============ -->
+    <section id="view-dash" class="view">
       <div class="stats-row" id="statsRow"></div>
+      <div class="chart" id="qualityChart"></div>
       <div id="historyList"></div>
       <div class="empty-hist" id="emptyHist" data-i18n="emptyHist"></div>
+    </section>
+
+    <!-- ============ GUIDE VIEW ============ -->
+    <section id="view-guide" class="view">
+      <div class="steps" id="guideSteps"></div>
+      <p class="note" data-i18n="guideNote"></p>
     </section>
   </main>
 
@@ -332,73 +424,97 @@
   const STRINGS = {
     en: {
       disclaimer: "Prototype only — not a medical device. This app never diagnoses a blood type. Software development & demo purposes only.",
-      subtitle: "software prototype · phase 2 (camera engine)",
-      tabScan: "Scan",
-      tabHistory: "History",
-      captureEmpty: "Line up a test card inside the brackets, or upload a photo.",
-      liveHint: "Live check running — hold the card steady inside the zone frame, then capture.",
+      subtitle: "software prototype · v0.2.2",
+      tabScan: "Scan", tabLab: "Lab", tabDash: "Stats", tabGuide: "Guide",
+      captureEmpty: "Line up a test card inside the brackets — or upload a photo.",
+      liveHint: "Easy mode: hold the card steady — the photo is taken automatically when quality is good.",
+      liveHintManual: "Live check running — hold steady, then capture.",
       btnCamera: "📷 Open camera",
-      btnUpload: "🖼 Upload photo",
-      btnCapture: "● Capture & check",
+      btnUpload: "🖼 Upload",
+      btnCapture: "● Capture",
       btnFlash: "⚡ Flash",
-      btnFlashOff: "⚡ Flash off",
-      btnStop: "✕ Close camera",
+      btnFlashOff: "⚡ Flash on",
+      btnStop: "✕ Close",
       qualityTitle: "Image quality (image checks only — not diagnostic)",
-      qBrightness: "Brightness",
-      qSharpness: "Sharpness",
-      qGlare: "Glare",
-      qContrast: "Contrast",
-      qStructure: "Card structure",
-      qResolution: "Resolution",
+      qBrightness: "Brightness", qSharpness: "Sharpness", qGlare: "Glare",
+      qContrast: "Contrast", qStructure: "Card structure", qResolution: "Resolution",
       zoneState: "not analyzed yet",
-      scanNote: "Reaction-zone detection and interpretation are not implemented in this prototype — planned for phases 3, 5 and 6, and requiring proper clinical validation before any real use.",
-      failNote: "Quality check failed — this image is refused. Please retake it: better light, less glare, hold steady, keep the card filling the frame.",
-      btnSave: "Save to history",
-      btnDiscard: "Discard",
+      scanNote: "Reaction-zone interpretation is planned for later phases (v0.3+) and requires proper clinical validation before any real use.",
+      failNote: "This image was refused. More light, less glare, hold steady — and let the camera fill the frame with the card.",
+      btnSave: "Save", btnDiscard: "Discard",
       emptyHist: "No scans saved yet.",
       good: "good", low: "low", high: "high", ok: "ok",
       delete: "Delete",
-      verdictPass: "✓ Image OK — ready for pipeline",
-      verdictWarn: "↻ Acceptable — retake recommended",
-      verdictFail: "✕ Please retake the image",
+      verdictPass: "✓ Perfect — image accepted",
+      verdictWarn: "↻ Usable — retake recommended",
+      verdictFail: "✕ Retake needed",
       privacyNote: "Processed locally in your browser — never uploaded.",
-      statsTotal: "Scans saved", statsGood: "Passed check", statsLast: "Last scan",
-      cameraError: "Camera access unavailable (permission/browser). Please upload a photo instead."
+      cameraError: "Camera access unavailable (permission/browser). Please upload a photo instead.",
+      statsTotal: "Scans", statsGood: "Passed", statsLast: "Last scan",
+      chartTitle: "Quality history",
+      // lab
+      labPlatform: "Device", labScreen: "Screen", labCamera: "Camera", labTorch: "Flash",
+      labYes: "yes", labNo: "no",
+      btnLabCapture: "📸 Capture reference shot",
+      labReportTitle: "Reference report",
+      btnCopyReport: "📋 Copy JSON report",
+      labNote: "Copy this report after capturing the same card with the HONOR and the iPhone — the differences between the two reports define the cross-device normalization requirements (v0.8 lab).",
+      labHistoryTitle: "Saved reference shots",
+      labCopied: "Copied to clipboard ✓",
+      // guide
+      guideNote: "Follow these steps for a perfect capture every time. The app refuses bad images on purpose — a good scan is worth a retake.",
+      g1t: "Bright, even light", g1d: "Daylight or a well-lit room. Avoid strong shadows across the card.",
+      g2t: "Hold 15–20 cm away", g2d: "Let the card fill the frame inside the brackets — don't crop the zones.",
+      g3t: "Straight, top-down", g3d: "Point straight at the card. No angle, no tilt — the analysis needs a flat view.",
+      g4t: "Avoid glare", g4d: "Tilt slightly or move if you see shiny reflections on the card surface.",
+      g5t: "Hold still, let it focus", g5d: "Wait until the image looks sharp, then let auto-capture take the shot.",
+      g6t: "Wait for the green check", g6d: "A green verdict means the image is good enough for the pipeline. Amber means usable, red means retake."
     },
     de: {
       disclaimer: "Nur Prototyp — kein Medizinprodukt. Diese App bestimmt niemals eine Blutgruppe. Nur für Softwareentwicklung & Demonstration.",
-      subtitle: "Software-Prototyp · Phase 2 (Kamera-Engine)",
-      tabScan: "Scan",
-      tabHistory: "Verlauf",
-      captureEmpty: "Testkarte innerhalb der Ecken ausrichten oder Foto hochladen.",
-      liveHint: "Live-Prüfung läuft — Karte ruhig im Zonenrahmen halten, dann aufnehmen.",
+      subtitle: "Software-Prototyp · v0.2.2",
+      tabScan: "Scan", tabLab: "Labor", tabDash: "Statistik", tabGuide: "Anleitung",
+      captureEmpty: "Testkarte innerhalb der Ecken ausrichten — oder Foto hochladen.",
+      liveHint: "Einfacher Modus: Karte ruhig halten — das Foto wird automatisch aufgenommen, wenn die Qualität stimmt.",
+      liveHintManual: "Live-Prüfung läuft — ruhig halten, dann aufnehmen.",
       btnCamera: "📷 Kamera öffnen",
-      btnUpload: "🖼 Foto hochladen",
-      btnCapture: "● Aufnehmen & prüfen",
+      btnUpload: "🖼 Hochladen",
+      btnCapture: "● Aufnehmen",
       btnFlash: "⚡ Blitz",
-      btnFlashOff: "⚡ Blitz aus",
-      btnStop: "✕ Kamera schließen",
+      btnFlashOff: "⚡ Blitz an",
+      btnStop: "✕ Schließen",
       qualityTitle: "Bildqualität (nur Bildprüfung — keine Diagnose)",
-      qBrightness: "Helligkeit",
-      qSharpness: "Schärfe",
-      qGlare: "Glanzreflexe",
-      qContrast: "Kontrast",
-      qStructure: "Kartenstruktur",
-      qResolution: "Auflösung",
+      qBrightness: "Helligkeit", qSharpness: "Schärfe", qGlare: "Glanzreflexe",
+      qContrast: "Kontrast", qStructure: "Kartenstruktur", qResolution: "Auflösung",
       zoneState: "noch nicht analysiert",
-      scanNote: "Die Erkennung und Interpretation der Reaktionszonen ist in diesem Prototyp nicht implementiert — geplant für Phase 3, 5 und 6, und erfordert vor jedem echten Einsatz eine ordentliche klinische Validierung.",
-      failNote: "Qualitätsprüfung fehlgeschlagen — dieses Bild wird abgelehnt. Bitte erneut aufnehmen: besseres Licht, weniger Reflexe, ruhig halten, Karte füllt den Rahmen.",
-      btnSave: "In Verlauf speichern",
-      btnDiscard: "Verwerfen",
+      scanNote: "Die Interpretation der Reaktionszonen ist für spätere Phasen geplant (v0.3+) und erfordert vor jedem echten Einsatz eine ordentliche klinische Validierung.",
+      failNote: "Dieses Bild wurde abgelehnt. Mehr Licht, weniger Reflexe, ruhig halten — und die Karte sollte den Rahmen füllen.",
+      btnSave: "Speichern", btnDiscard: "Verwerfen",
       emptyHist: "Noch keine Scans gespeichert.",
       good: "gut", low: "niedrig", high: "hoch", ok: "ok",
       delete: "Löschen",
-      verdictPass: "✓ Bild OK — bereit für die Pipeline",
-      verdictWarn: "↻ Akzeptabel — Neuaufnahme empfohlen",
-      verdictFail: "✕ Bitte Bild erneut aufnehmen",
+      verdictPass: "✓ Perfekt — Bild akzeptiert",
+      verdictWarn: "↻ Nutzbar — Neuaufnahme empfohlen",
+      verdictFail: "✕ Neu aufnehmen",
       privacyNote: "Lokal im Browser verarbeitet — niemals hochgeladen.",
-      statsTotal: "Scans gespeichert", statsGood: "Prüfung bestanden", statsLast: "Letzter Scan",
-      cameraError: "Kamerazugriff nicht möglich (Berechtigung/Browser). Bitte stattdessen ein Foto hochladen."
+      cameraError: "Kamerazugriff nicht möglich (Berechtigung/Browser). Bitte stattdessen ein Foto hochladen.",
+      statsTotal: "Scans", statsGood: "Bestanden", statsLast: "Letzter Scan",
+      chartTitle: "Qualitätsverlauf",
+      labPlatform: "Gerät", labScreen: "Bildschirm", labCamera: "Kamera", labTorch: "Blitz",
+      labYes: "ja", labNo: "nein",
+      btnLabCapture: "📸 Referenzaufnahme machen",
+      labReportTitle: "Referenzbericht",
+      btnCopyReport: "📋 JSON-Bericht kopieren",
+      labNote: "Kopiere diesen Bericht nach Aufnahmen mit HONOR und iPhone von derselben Karte — die Unterschiede definieren die gerätübergreifenden Normalisierungsanforderungen (v0.8-Labor).",
+      labHistoryTitle: "Gespeicherte Referenzaufnahmen",
+      labCopied: "In die Zwischenablage kopiert ✓",
+      guideNote: "Mit diesen Schritten gelingt jede Aufnahme. Die App lehnt schlechte Bilder absichtlich ab — ein guter Scan ist eine Neuaufnahme wert.",
+      g1t: "Helles, gleichmäßiges Licht", g1d: "Tageslicht oder ein gut beleuchteter Raum. Keine harten Schatten auf der Karte.",
+      g2t: "15–20 cm Abstand", g2d: "Die Karte soll den Rahmen ausfüllen — Zonen nicht abschneiden.",
+      g3t: "Gerade, von oben", g3d: "Direkt von oben fotografieren. Kein Winkel, kein Kippen — die Analyse braucht eine flache Ansicht.",
+      g4t: "Reflexe vermeiden", g4d: "Leicht drehen oder bewegen, wenn glänzende Reflexe auf der Karte sichtbar sind.",
+      g5t: "Ruhig halten, fokussieren", g5d: "Warten, bis das Bild scharf ist — dann macht der Automatik-Modus das Foto.",
+      g6t: "Auf das grüne Häkchen warten", g6d: "Grün bedeutet: Bild gut genug für die Pipeline. Gelb heißt nutzbar, rot heißt neu aufnehmen."
     }
   };
 
@@ -408,55 +524,60 @@
   let liveTimer = null;
   let torchOn = false;
   let torchable = false;
-  let lastReport = null;   // { metrics, checks, verdict } of the analyzed image
+  let goodStreak = 0;      // consecutive good live frames -> auto capture
+  let lastReport = null;
 
+  const $ = (id)=> document.getElementById(id);
   function t(key){ return STRINGS[lang][key] || key; }
 
   function applyI18n(){
-    document.getElementById('html-root').lang = lang;
+    $('html-root').lang = lang;
     document.querySelectorAll('[data-i18n]').forEach(el=>{ el.textContent = t(el.getAttribute('data-i18n')); });
-    document.getElementById('lang-en').classList.toggle('active', lang==='en');
-    document.getElementById('lang-de').classList.toggle('active', lang==='de');
+    document.querySelectorAll('[data-i18n-ph]').forEach(el=>{ el.placeholder = t(el.getAttribute('data-i18n-ph')); });
+    $('lang-en').classList.toggle('active', lang==='en');
+    $('lang-de').classList.toggle('active', lang==='de');
     if(lastReport) renderQuality(lastReport);
+    renderGuide();
     renderHistory();
+    renderLabHistory();
   }
-  document.getElementById('lang-en').onclick = ()=>{ lang='en'; applyI18n(); };
-  document.getElementById('lang-de').onclick = ()=>{ lang='de'; applyI18n(); };
+  $('lang-en').onclick = ()=>{ lang='en'; applyI18n(); };
+  $('lang-de').onclick = ()=>{ lang='de'; applyI18n(); };
 
   // ---- tabs ----
-  const tabScanBtn = document.getElementById('tab-scan-btn');
-  const tabHistBtn = document.getElementById('tab-history-btn');
-  const viewScan = document.getElementById('view-scan');
-  const viewHist = document.getElementById('view-history');
-  tabScanBtn.onclick = ()=>{
-    tabScanBtn.classList.add('active'); tabHistBtn.classList.remove('active');
-    viewScan.classList.add('active'); viewHist.classList.remove('active');
-  };
-  tabHistBtn.onclick = ()=>{
-    tabHistBtn.classList.add('active'); tabScanBtn.classList.remove('active');
-    viewHist.classList.add('active'); viewScan.classList.remove('active');
-    stopCamera();
-    renderHistory();
-  };
+  const tabs = [
+    { btn: 'tab-scan-btn', view: 'view-scan', onStop: true },
+    { btn: 'tab-lab-btn', view: 'view-lab' },
+    { btn: 'tab-dash-btn', view: 'view-dash', render: renderHistory },
+    { btn: 'tab-guide-btn', view: 'view-guide' }
+  ];
+  tabs.forEach(tab=>{
+    $(tab.btn).onclick = ()=>{
+      tabs.forEach(x=>{ $(x.btn).classList.remove('active'); $(x.view).classList.remove('active'); });
+      $(tab.btn).classList.add('active');
+      $(tab.view).classList.add('active');
+      if(tab.render) tab.render();
+    };
+  });
 
   /* ================================================================
-     v0.2 CAMERA ENGINE
-     Camera -> original frame -> quality check. Local only.
+     v0.2 CAMERA ENGINE (thresholds tuned for real phone captures)
      ================================================================ */
 
-  const video = document.getElementById('video');
-  const preview = document.getElementById('preview');
-  const captureEmpty = document.getElementById('captureEmpty');
-  const fileInput = document.getElementById('fileInput');
-  const hud = document.getElementById('hud');
+  const video = $('video');
+  const preview = $('preview');
+  const captureEmpty = $('captureEmpty');
+  const fileInput = $('fileInput');
+  const hud = $('hud');
+  const autoDots = $('autoDots');
 
-  const btnCamera = document.getElementById('btnCamera');
-  const btnUpload = document.getElementById('btnUpload');
-  const btnCapture = document.getElementById('btnCapture');
-  const btnFlash = document.getElementById('btnFlash');
-  const btnStop = document.getElementById('btnStop');
+  const btnCamera = $('btnCamera');
+  const btnUpload = $('btnUpload');
+  const btnCapture = $('btnCapture');
+  const btnFlash = $('btnFlash');
+  const btnStop = $('btnStop');
 
-  // ---------- quality metrics (see /lib/quality.ts, unit-tested) ----------
+  // ---------- quality metrics (unit-tested) ----------
   function computeMetrics(img){
     const d = img.data, w = img.width, h = img.height, n = w * h;
     const gray = new Float32Array(n);
@@ -501,7 +622,7 @@
     add('qSharpness', String(m.blurScore), blurState, t('low') + ' — ' + (lang==='de' ? 'ruhig halten, Fokus abwarten.' : 'hold steady, let focus lock.'));
 
     const bState = m.mean < 35 ? 'fail' : m.mean < 55 ? 'warn' : m.mean > 245 ? 'fail' : m.mean > 220 ? 'warn' : 'pass';
-    add('qBrightness', m.mean + '/255', bState, (m.mean < 65 ? t('low') : t('high')) + ' — ' + (lang==='de' ? (m.mean < 65 ? 'mehr Licht.' : 'weniger Licht/Belichtung.') : (m.mean < 65 ? 'add light.' : 'reduce light/exposure.')));
+    add('qBrightness', m.mean + '/255', bState, (m.mean < 55 ? t('low') : t('high')) + ' — ' + (lang==='de' ? (m.mean < 55 ? 'mehr Licht.' : 'weniger Licht/Belichtung.') : (m.mean < 55 ? 'add light.' : 'reduce light/exposure.')));
 
     const gState = m.glarePct >= 6 ? 'fail' : m.glarePct >= 2 ? 'warn' : 'pass';
     add('qGlare', m.glarePct + '%', gState, lang==='de' ? 'Reflexe — Winkel ändern.' : 'Reflections — change angle.');
@@ -520,7 +641,7 @@
     return { metrics: m, checks, verdict };
   }
 
-  // ---------- live camera ----------
+  // ---------- live camera + easy auto-capture ----------
   async function openCamera(){
     try{
       stream = await navigator.mediaDevices.getUserMedia({
@@ -539,8 +660,11 @@
     await video.play();
 
     try{
-      const caps = stream.getVideoTracks()[0].getCapabilities ? stream.getVideoTracks()[0].getCapabilities() : {};
+      const track = stream.getVideoTracks()[0];
+      const caps = track.getCapabilities ? track.getCapabilities() : {};
       torchable = 'torch' in caps;
+      $('labCamera').textContent = (video.videoWidth + '×' + video.videoHeight);
+      $('labTorch').textContent = torchable ? t('labYes') : t('labNo');
     }catch(e){ torchable = false; }
 
     btnCamera.classList.add('hide');
@@ -548,10 +672,17 @@
     btnCapture.classList.remove('hide');
     btnStop.classList.remove('hide');
     btnFlash.classList.toggle('hide', !torchable);
-    document.getElementById('zoneFrame').classList.add('show');
-    document.getElementById('liveHint').classList.add('show');
+    $('zoneFrame').classList.add('show');
+    $('liveHint').classList.add('show');
     hud.classList.add('show');
+    autoDots.classList.add('show');
+    goodStreak = 0;
+    updateAutoDots();
     liveTimer = setInterval(liveCheck, 600);
+  }
+
+  function updateAutoDots(){
+    [...autoDots.children].forEach((dot, i)=> dot.classList.toggle('on', i < goodStreak));
   }
 
   function stopCamera(){
@@ -565,10 +696,12 @@
     btnCapture.classList.add('hide');
     btnStop.classList.add('hide');
     btnFlash.classList.add('hide');
-    document.getElementById('zoneFrame').classList.remove('show');
-    document.getElementById('liveHint').classList.remove('show');
+    $('zoneFrame').classList.remove('show');
+    $('liveHint').classList.remove('show');
     hud.classList.remove('show');
+    autoDots.classList.remove('show');
     hud.innerHTML = '';
+    goodStreak = 0;
   }
 
   async function toggleFlash(){
@@ -598,6 +731,16 @@
       chip.textContent = t(c.name) + ' ' + c.value;
       hud.appendChild(chip);
     });
+
+    // EASY MODE: auto-capture after 3 consecutive good frames (~1.8 s)
+    if(r.verdict === 'pass'){
+      goodStreak = Math.min(3, goodStreak + 1);
+      updateAutoDots();
+      if(goodStreak >= 3) captureNow();
+    }else{
+      goodStreak = 0;
+      updateAutoDots();
+    }
   }
 
   function captureNow(){
@@ -657,49 +800,147 @@
     };
     const cls = { pass: 'pill good', warn: 'pill warn', fail: 'pill bad' };
     report.checks.forEach(ch=>{
-      const el = document.getElementById(ids[ch.name]);
+      const el = $(ids[ch.name]);
       if(el){ el.textContent = ch.label; el.className = cls[ch.state]; }
     });
 
-    const badge = document.getElementById('readinessBadge');
+    const badge = $('readinessBadge');
     if(report.verdict === 'pass'){ badge.textContent = t('verdictPass'); badge.className = 'readiness ready'; }
     else if(report.verdict === 'warn'){ badge.textContent = t('verdictWarn'); badge.className = 'readiness warn'; }
     else { badge.textContent = t('verdictFail'); badge.className = 'readiness fail'; }
 
-    document.getElementById('qualityCard').style.display = 'block';
-    document.getElementById('scanNote').style.display = 'block';
-    document.getElementById('saveRow').style.display = 'flex';
+    $('qualityCard').style.display = 'block';
+    $('scanNote').style.display = 'block';
+    $('saveRow').style.display = 'flex';
 
     // v0.2 design rule: a failing image is REFUSED, not analyzed.
     const refused = report.verdict === 'fail';
-    document.getElementById('failNote').style.display = refused ? 'block' : 'none';
-    document.getElementById('zonesBox').style.display = refused ? 'none' : 'grid';
-    document.getElementById('btnSave').disabled = refused;
+    $('failNote').style.display = refused ? 'block' : 'none';
+    $('zonesBox').style.display = refused ? 'none' : 'grid';
+    $('btnSave').disabled = refused;
   }
 
-  document.getElementById('btnDiscard').onclick = resetCapture;
+  $('btnDiscard').onclick = resetCapture;
   function resetCapture(){
     currentDataUrl = null;
     lastReport = null;
     stopCamera();
     preview.style.display = 'none';
     captureEmpty.style.display = 'block';
-    document.getElementById('qualityCard').style.display = 'none';
-    document.getElementById('zonesBox').style.display = 'none';
-    document.getElementById('scanNote').style.display = 'none';
-    document.getElementById('failNote').style.display = 'none';
-    document.getElementById('saveRow').style.display = 'none';
+    $('qualityCard').style.display = 'none';
+    $('zonesBox').style.display = 'none';
+    $('scanNote').style.display = 'none';
+    $('failNote').style.display = 'none';
+    $('saveRow').style.display = 'none';
   }
 
-  // ---- history (localStorage — local only, nothing shared/uploaded) ----
+  /* ================================================================
+     DEVICE LAB — reference reports for cross-device comparison
+     ================================================================ */
+  let labReport = null;
+
+  function initLabInfo(){
+    $('labPlatform').textContent = (navigator.userAgent.match(/Android|iPhone|iPad/i) || [navigator.platform || '—'])[0];
+    $('labScreen').textContent = window.screen.width + '×' + window.screen.height + ' @' + (window.devicePixelRatio || 1) + 'x';
+    $('labTorch').textContent = torchable ? t('labYes') : t('labNo');
+  }
+
+  $('btnLabCapture').onclick = async ()=>{
+    try{
+      const s = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } },
+        audio: false
+      });
+      const v = document.createElement('video');
+      v.srcObject = s; v.muted = true; v.playsInline = true;
+      await new Promise(r=>{ v.onloadedmetadata = r; });
+      await v.play();
+      await new Promise(r=> setTimeout(r, 350)); // let exposure settle
+      const c = document.createElement('canvas');
+      c.width = v.videoWidth; c.height = v.videoHeight;
+      c.getContext('2d').drawImage(v, 0, 0);
+      const full = c.toDataURL('image/jpeg', 0.85);
+      $('labCamera').textContent = c.width + '×' + c.height;
+      s.getTracks().forEach(tr=>tr.stop());
+
+      const img = new Image();
+      img.onload = ()=>{
+        const scale = Math.min(1, 1280 / Math.max(c.width, c.height));
+        const w = Math.round(c.width * scale), h = Math.round(c.height * scale);
+        const cc = document.createElement('canvas');
+        cc.width = w; cc.height = h;
+        const ctx = cc.getContext('2d', { willReadFrequently: true });
+        ctx.drawImage(img, 0, 0, w, h);
+        const m = computeMetrics(ctx.getImageData(0, 0, w, h));
+        labReport = { ts: new Date().toISOString(), device: $('labPlatform').textContent, screen: $('labScreen').textContent, resolution: c.width + '×' + c.height, metrics: m };
+        renderLabReport();
+      };
+      img.src = full;
+    }catch(err){
+      alert(t('cameraError'));
+    }
+  };
+
+  function renderLabReport(){
+    if(!labReport) return;
+    const m = labReport.metrics;
+    $('labReportTable').innerHTML = [
+      ['qSharpness', m.blurScore], ['qBrightness', m.mean + '/255'], ['qGlare', m.glarePct + '%'],
+      ['qContrast', m.contrast], ['qStructure', m.edgePct + '%'], ['qResolution', labReport.resolution]
+    ].map(row=> `<tr><td>${t(row[0])}</td><td>${row[1]}</td></tr>`).join('');
+    $('labReportCard').style.display = 'block';
+  }
+
+  $('btnCopyReport').onclick = async ()=>{
+    if(!labReport) return;
+    const payload = { app: 'BloodScan AI v0.2.2', ...labReport };
+    try{ await navigator.clipboard.writeText(JSON.stringify(payload, null, 2)); }
+    catch(e){
+      const ta = document.createElement('textarea');
+      ta.value = JSON.stringify(payload, null, 2);
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+    }
+    $('btnCopyReport').textContent = t('labCopied');
+    setTimeout(()=>{ $('btnCopyReport').textContent = t('btnCopyReport'); }, 2000);
+
+    const list = loadLabHistory();
+    list.unshift(labReport);
+    persistLabHistory(list.slice(0, 20));
+    renderLabHistory();
+  };
+
+  const LKEY = 'bloodscan:lab';
+  function loadLabHistory(){
+    try{ const s = localStorage.getItem(LKEY); return s ? JSON.parse(s) : []; }
+    catch(e){ return []; }
+  }
+  function persistLabHistory(list){
+    try{ localStorage.setItem(LKEY, JSON.stringify(list)); }catch(e){}
+  }
+  function renderLabHistory(){
+    const list = loadLabHistory();
+    const el = $('labHistoryList');
+    if(!list.length){ $('labHistoryCard').style.display = 'none'; return; }
+    $('labHistoryCard').style.display = 'block';
+    el.innerHTML = list.map(r=>{
+      const m = r.metrics;
+      return `<div class="hist-item" style="display:block">
+        <div class="ts">${r.device} · ${r.ts.replace('T',' ').slice(0,16)}</div>
+        <div class="sum">${t('qSharpness')} ${m.blurScore} · ${t('qGlare')} ${m.glarePct}% · ${t('qBrightness')} ${m.mean}/255 · ${t('qContrast')} ${m.contrast} · ${t('qStructure')} ${m.edgePct}%</div>
+      </div>`;
+    }).join('');
+  }
+
+  /* ================================================================
+     DASHBOARD — colorful stats + quality chart + history
+     ================================================================ */
   const HKEY = 'bloodscan:history';
   function loadHistory(){
     try{ const s = localStorage.getItem(HKEY); return s ? JSON.parse(s) : []; }
     catch(e){ return []; }
   }
   function persistHistory(list){
-    try{ localStorage.setItem(HKEY, JSON.stringify(list)); }
-    catch(e){ console.error('storage error', e); }
+    try{ localStorage.setItem(HKEY, JSON.stringify(list)); }catch(e){}
   }
   function thumb(dataUrl, cb){
     const img = new Image();
@@ -712,7 +953,7 @@
     img.src = dataUrl;
   }
 
-  document.getElementById('btnSave').onclick = ()=>{
+  $('btnSave').onclick = ()=>{
     if(!currentDataUrl || !lastReport || lastReport.verdict === 'fail') return;
     thumb(currentDataUrl, (thumbUrl)=>{
       const m = lastReport.metrics;
@@ -728,18 +969,20 @@
       });
       persistHistory(list.slice(0, 50));
       resetCapture();
-      tabHistBtn.click();
+      $('tab-dash-btn').click();
     });
   };
 
   function renderHistory(){
-    const listEl = document.getElementById('historyList');
-    const emptyEl = document.getElementById('emptyHist');
-    const statsEl = document.getElementById('statsRow');
+    const listEl = $('historyList');
+    const emptyEl = $('emptyHist');
+    const statsEl = $('statsRow');
+    const chartEl = $('qualityChart');
     const list = loadHistory();
 
     if(list.length === 0){
       statsEl.innerHTML = '';
+      chartEl.innerHTML = `<div class="chart-empty">${t('chartTitle')}</div>`;
       listEl.innerHTML = '';
       emptyEl.style.display = 'block';
       return;
@@ -753,6 +996,14 @@
       <div class="stat-card amber"><div class="num">${goodCount}</div><div class="lbl">${t('statsGood')}</div></div>
       <div class="stat-card crimson"><div class="num">${last.ts.split(',')[0]}</div><div class="lbl">${t('statsLast')}</div></div>
     `;
+
+    // simple bar chart: last 20 scans, bar height = quality score
+    const bars = list.slice(0, 20).reverse();
+    const maxBlur = Math.max(60, ...bars.map(b=> b.blur || 0));
+    chartEl.innerHTML = bars.map(b=>{
+      const pct = Math.max(8, Math.min(100, (b.blur || 0) / maxBlur * 100));
+      return `<div class="bar ${b.verdict}" style="height:${pct}%" title="${b.ts}"></div>`;
+    }).join('');
 
     listEl.innerHTML = '';
     list.forEach(item=>{
@@ -776,10 +1027,22 @@
     });
   }
 
-  // ---- hero 3D blood-drop animation (decorative; paused when tab hidden for efficiency) ----
+  /* ================================================================
+     GUIDE
+     ================================================================ */
+  function renderGuide(){
+    const keys = ['g1','g2','g3','g4','g5','g6'];
+    $('guideSteps').innerHTML = keys.map((k, i)=>
+      `<div class="step"><div class="n">${i+1}</div><div><div class="t">${t(k+'t')}</div><div class="d">${t(k+'d')}</div></div></div>`
+    ).join('');
+  }
+
+  /* ================================================================
+     HERO (decorative)
+     ================================================================ */
   let rafId = null;
   function initHero(){
-    const holder = document.getElementById('heroCanvas');
+    const holder = $('heroCanvas');
     if(typeof THREE === 'undefined' || !holder) return;
     try{
       const w = holder.clientWidth, h = holder.clientHeight;
@@ -797,7 +1060,6 @@
       const key = new THREE.PointLight(0xffffff, 1.3); key.position.set(2.2, 3, 2.5); scene.add(key);
       const rim = new THREE.PointLight(0xff6a52, 0.8); rim.position.set(-2, -0.5, 2); scene.add(rim);
 
-      // teardrop profile -> lathe geometry
       const pts = [
         new THREE.Vector2(0.00, 0.00),
         new THREE.Vector2(0.55, 0.05),
@@ -817,11 +1079,9 @@
       dropGroup.add(drop);
       scene.add(dropGroup);
 
-      // small orbiting "cell" discs
       const cellMat = new THREE.MeshStandardMaterial({ color:0xD1483A, roughness:0.4, metalness:0.05 });
       const cells = [];
-      const cellCount = 7;
-      for(let i=0;i<cellCount;i++){
+      for(let i=0;i<7;i++){
         const geo = new THREE.SphereGeometry(0.09 + Math.random()*0.03, 12, 12);
         const m = new THREE.Mesh(geo, cellMat);
         m.scale.y = 0.35;
@@ -872,6 +1132,7 @@
   btnStop.onclick = ()=>{ stopCamera(); if(!currentDataUrl){ preview.style.display='none'; captureEmpty.style.display='block'; } };
   btnFlash.onclick = toggleFlash;
 
+  initLabInfo();
   applyI18n();
   initHero();
 })();
