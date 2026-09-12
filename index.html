@@ -497,19 +497,19 @@
       checks.push({ name, value, state, label: value + ' · ' + word, hint: state !== 'pass' ? hint : '' });
     };
 
-    const blurState = m.blurScore >= 60 ? 'pass' : m.blurScore >= 30 ? 'warn' : 'fail';
+    const blurState = m.blurScore >= 45 ? 'pass' : m.blurScore >= 20 ? 'warn' : 'fail';
     add('qSharpness', String(m.blurScore), blurState, t('low') + ' — ' + (lang==='de' ? 'ruhig halten, Fokus abwarten.' : 'hold steady, let focus lock.'));
 
-    const bState = m.mean < 45 ? 'fail' : m.mean < 65 ? 'warn' : m.mean > 235 ? 'fail' : m.mean > 215 ? 'warn' : 'pass';
+    const bState = m.mean < 35 ? 'fail' : m.mean < 55 ? 'warn' : m.mean > 245 ? 'fail' : m.mean > 220 ? 'warn' : 'pass';
     add('qBrightness', m.mean + '/255', bState, (m.mean < 65 ? t('low') : t('high')) + ' — ' + (lang==='de' ? (m.mean < 65 ? 'mehr Licht.' : 'weniger Licht/Belichtung.') : (m.mean < 65 ? 'add light.' : 'reduce light/exposure.')));
 
-    const gState = m.glarePct >= 3 ? 'fail' : m.glarePct >= 1 ? 'warn' : 'pass';
+    const gState = m.glarePct >= 6 ? 'fail' : m.glarePct >= 2 ? 'warn' : 'pass';
     add('qGlare', m.glarePct + '%', gState, lang==='de' ? 'Reflexe — Winkel ändern.' : 'Reflections — change angle.');
 
-    const cState = m.contrast < 20 ? 'fail' : m.contrast < 32 ? 'warn' : 'pass';
+    const cState = m.contrast < 18 ? 'fail' : m.contrast < 28 ? 'warn' : 'pass';
     add('qContrast', String(m.contrast), cState, lang==='de' ? 'flaches Licht.' : 'flat lighting.');
 
-    const eState = m.edgePct >= 2.5 ? 'pass' : m.edgePct >= 1.2 ? 'warn' : 'fail';
+    const eState = m.edgePct >= 1.5 ? 'pass' : m.edgePct >= 0.6 ? 'warn' : 'fail';
     add('qStructure', m.edgePct + '%', eState, lang==='de' ? 'keine kartenähnliche Struktur — Karte in den Rahmen legen.' : 'no card-like structure — place the card in the frame.');
 
     const longest = Math.max(resW, resH);
