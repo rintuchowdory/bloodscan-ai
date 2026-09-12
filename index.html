@@ -295,6 +295,9 @@
     <button id="tab-guide-btn" style="--tab-c:#6B4FA1">
       <span class="ico">🧭</span><span data-i18n="tabGuide"></span>
     </button>
+    <button id="tab-lit-btn" style="--tab-c:#2C6BA4">
+      <span class="ico">📑</span><span data-i18n="tabLit"></span>
+    </button>
   </nav>
 
   <main>
@@ -400,6 +403,13 @@
       <div class="steps" id="guideSteps"></div>
       <p class="note" data-i18n="guideNote"></p>
     </section>
+
+    <!-- ============ RESEARCH VIEW ============ -->
+    <section id="view-lit" class="view">
+      <p class="note" data-i18n="litNote" style="margin-top:0"></p>
+      <div class="steps" id="litList"></div>
+      <p class="note" data-i18n="litOutro"></p>
+    </section>
   </main>
 
   <footer>
@@ -463,6 +473,9 @@
       labCopied: "Copied to clipboard ✓",
       // guide
       guideNote: "Follow these steps for a perfect capture every time. The app refuses bad images on purpose — a good scan is worth a retake.",
+      tabLit: "Papers",
+      litNote: "Published research that grounds this prototype — smartphone imaging for blood grouping, agglutination image analysis, and paper-based test devices. Curated from PubMed (NCBI).",
+      litOutro: "External links lead to PubMed (ncbi.nlm.nih.gov). The science happens on the card — these papers show how others read it.",
       g1t: "Bright, even light", g1d: "Daylight or a well-lit room. Avoid strong shadows across the card.",
       g2t: "Hold 15–20 cm away", g2d: "Let the card fill the frame inside the brackets — don't crop the zones.",
       g3t: "Straight, top-down", g3d: "Point straight at the card. No angle, no tilt — the analysis needs a flat view.",
@@ -509,6 +522,9 @@
       labHistoryTitle: "Gespeicherte Referenzaufnahmen",
       labCopied: "In die Zwischenablage kopiert ✓",
       guideNote: "Mit diesen Schritten gelingt jede Aufnahme. Die App lehnt schlechte Bilder absichtlich ab — ein guter Scan ist eine Neuaufnahme wert.",
+      tabLit: "Studien",
+      litNote: "Forschung, auf der dieser Prototyp aufbaut — Smartphone-Bildgebung für Blutgruppenbestimmung, Agglutinations-Bildanalyse und papierbasierte Testverfahren. Kuratiert aus PubMed (NCBI).",
+      litOutro: "Externe Links führen zu PubMed (ncbi.nlm.nih.gov). Die Reaktion entsteht auf der Karte — diese Studien zeigen, wie andere sie auslesen.",
       g1t: "Helles, gleichmäßiges Licht", g1d: "Tageslicht oder ein gut beleuchteter Raum. Keine harten Schatten auf der Karte.",
       g2t: "15–20 cm Abstand", g2d: "Die Karte soll den Rahmen ausfüllen — Zonen nicht abschneiden.",
       g3t: "Gerade, von oben", g3d: "Direkt von oben fotografieren. Kein Winkel, kein Kippen — die Analyse braucht eine flache Ansicht.",
@@ -549,7 +565,8 @@
     { btn: 'tab-scan-btn', view: 'view-scan', onStop: true },
     { btn: 'tab-lab-btn', view: 'view-lab' },
     { btn: 'tab-dash-btn', view: 'view-dash', render: renderHistory },
-    { btn: 'tab-guide-btn', view: 'view-guide' }
+    { btn: 'tab-guide-btn', view: 'view-guide' },
+    { btn: 'tab-lit-btn', view: 'view-lit', render: renderPapers }
   ];
   tabs.forEach(tab=>{
     $(tab.btn).onclick = ()=>{
@@ -1025,6 +1042,41 @@
       };
       listEl.appendChild(row);
     });
+  }
+
+  /* ================================================================
+     RESEARCH PAPERS (curated from PubMed / NCBI)
+     ================================================================ */
+  const PAPERS = [
+    { pmid: 28269240, tag: "smartphone imaging", a: "Srivathsa N et al.", j: "IEEE EMBC", y: 2016,
+      title: "Automated ABO Rh-D blood type detection using smartphone imaging for point-of-care medical diagnostics" },
+    { pmid: 42159803, tag: "vision model", a: "Bukhari SS et al.", j: "Biomed. Microdevices", y: 2026,
+      title: "Automated blood group classification using a digital microfluidics chip and vision transformer-based image analysis" },
+    { pmid: 42402955, tag: "agglutination QC", a: "Pedersen MT et al.", j: "Transfus. Med.", y: 2026,
+      title: "Simple image analysis for reliability control of column agglutination test in pretransfusion testing" },
+    { pmid: 33871962, tag: "alignment markers", a: "Zhang H et al.", j: "ACS Nano", y: 2021,
+      title: "Flipped Quick-Response Code Enables Reliable Blood Grouping" },
+    { pmid: 35955835, tag: "immunostrip optics", a: "Ratajczak K et al.", j: "Int. J. Mol. Sci.", y: 2022,
+      title: "Effective Optical Image Assessment of Cellulose Paper Immunostrips for Blood Typing" },
+    { pmid: 27126791, tag: "paper-based", a: "Songjaroen T et al.", j: "Anal. Chim. Acta", y: 2016,
+      title: "Simultaneous forward and reverse ABO blood group typing using a paper-based device and barcode-like interpretation" },
+    { pmid: 33326537, tag: "paper-based", a: "Hertaeg MJ et al.", j: "The Analyst", y: 2021,
+      title: "A rapid paper-based blood typing method from droplet wicking" },
+    { pmid: 30319889, tag: "illumination", a: "Chen G et al.", j: "Biomed. Opt. Express", y: 2018,
+      title: "Smartphone supported backlight illumination and image acquisition for microfluidic-based point-of-care testing" }
+  ];
+  function renderPapers(){
+    const el = $('litList');
+    if(el.dataset.done === '1') return;
+    el.dataset.done = '1';
+    el.innerHTML = PAPERS.map((p, i)=>`
+      <a class="step" style="text-decoration:none;color:inherit" href="https://pubmed.ncbi.nlm.nih.gov/${p.pmid}/" target="_blank" rel="noopener">
+        <div class="n" style="font-size:13px">${i+1}</div>
+        <div style="min-width:0">
+          <div class="t">${p.title}</div>
+          <div class="d">${p.a} · ${p.j} ${p.y} · <span style="font-family:'IBM Plex Mono',monospace;unicode-bidi:embed">${p.tag}</span> · PMID ${p.pmid} ↗</div>
+        </div>
+      </a>`).join('');
   }
 
   /* ================================================================
