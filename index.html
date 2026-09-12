@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>BloodScan AI — Prototype v0.1</title>
+<title>BloodScan AI — Prototype v0.2</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap');
 
@@ -111,6 +111,33 @@
   .brackets svg{ width:100%; height:100%; }
   .brackets path{ stroke:#EDEAD9; stroke-width:2.5; fill:none; opacity:0.85; }
 
+  /* reaction-zone frame overlay (live mode) */
+  .zoneframe{ position:absolute; inset:14px; pointer-events:none; display:none; }
+  .zoneframe.show{ display:block; }
+  .zf-box{
+    position:absolute; top:12%; bottom:12%; width:28%;
+    border:1.5px dashed rgba(237,234,217,0.55); border-radius:6px;
+  }
+  .zf-box.zA{ left:3%; } .zf-box.zB{ left:36%; } .zf-box.zD{ right:3%; }
+  .zf-box span{
+    position:absolute; top:6px; left:50%; transform:translateX(-50%);
+    font-size:9.5px; font-family:'IBM Plex Mono', monospace; color:#0F1512;
+    background:rgba(237,234,217,0.85); padding:2px 6px; border-radius:4px; white-space:nowrap;
+  }
+
+  /* live quality HUD */
+  .hud{ position:absolute; left:8px; right:8px; bottom:8px; display:none; gap:5px; flex-wrap:wrap; pointer-events:none; }
+  .hud.show{ display:flex; }
+  .chip{
+    font-size:10px; padding:4px 8px; border-radius:6px;
+    background:rgba(15,21,18,0.74); color:#EDEAD9;
+    border:1px solid rgba(237,234,217,0.25);
+    font-family:'IBM Plex Mono', monospace; white-space:nowrap;
+  }
+  .chip.good{ border-color:#4CAF7D; }
+  .chip.warn{ border-color:#E0A233; }
+  .chip.bad{ border-color:#FF8A7A; color:#FFC0B5; }
+
   .capture-controls{ display:flex; gap:10px; margin-top: 12px; }
   .btn{
     flex:1; padding: 12px 10px; border-radius: 8px; border:1px solid var(--line);
@@ -118,21 +145,32 @@
     display:flex; align-items:center; justify-content:center; gap:7px;
   }
   .btn.primary{ background: linear-gradient(135deg,var(--teal),var(--teal-dark)); border-color: var(--teal-dark); color:#fff; }
+  .btn.danger{ background: linear-gradient(135deg,#A93A2E,#7A271E); border-color:#7A271E; color:#fff; }
   .btn:disabled{ opacity:0.45; cursor:not-allowed; }
+  .hide{ display:none !important; }
   input[type=file]{ display:none; }
+  .live-hint{ font-size:12px; color:var(--ink-soft); margin-top:8px; display:none; }
+  .live-hint.show{ display:block; }
 
   /* ---- quality report ---- */
   .card{ border:1px solid var(--line); border-radius: 8px; padding: 14px 16px; margin-top: 16px; background: var(--panel); }
   .card h3{ font-size: 13px; color: var(--ink-soft); font-weight:600; margin-bottom: 10px; }
   .qrow{ display:flex; justify-content:space-between; align-items:center; padding: 6px 0; font-size: 13.5px; border-bottom: 1px dashed var(--line); }
-  .qrow:last-child{ border-bottom:none; }
+  .qrow:last-of-type{ border-bottom:none; }
   .pill{ font-size: 11.5px; padding: 3px 8px; border-radius: 12px; font-weight:600; font-family:'IBM Plex Mono',monospace; }
   .pill.good{ background: var(--teal-tint); color: var(--teal-dark); }
   .pill.warn{ background: var(--amber-tint); color: var(--amber); }
+  .pill.bad{ background: var(--danger-tint); color: var(--danger); }
 
   .readiness{ display:inline-flex; align-items:center; gap:7px; padding:7px 14px; border-radius:20px; font-size:12.5px; font-weight:600; margin-top:12px; color:#fff; }
   .readiness.ready{ background: linear-gradient(90deg,#1B6E63,#2C9A87); }
-  .readiness.retake{ background: linear-gradient(90deg,#C77B12,#E0A233); }
+  .readiness.warn{ background: linear-gradient(90deg,#C77B12,#E0A233); }
+  .readiness.fail{ background: linear-gradient(90deg,#A93A2E,#C75C4F); }
+
+  .privacy-line{
+    margin-top:12px; font-size:11.5px; color:var(--ink-soft);
+    display:flex; align-items:center; gap:6px;
+  }
 
   /* ---- zones ---- */
   .zones{ display:grid; grid-template-columns: repeat(3,1fr); gap:10px; margin-top: 16px; }
@@ -144,6 +182,7 @@
   .zone .state{ margin-top:8px; font-size: 11px; color:#8A9490; font-family:'IBM Plex Mono',monospace; }
 
   .note{ font-size: 12px; color: var(--ink-soft); margin-top: 14px; line-height:1.5; }
+  .note.fail{ color: var(--danger); font-weight:500; }
   .save-row{ margin-top: 18px; display:flex; gap:10px; }
 
   /* ---- history / dashboard ---- */
@@ -160,6 +199,10 @@
   .hist-meta{ flex:1; min-width:0; }
   .hist-meta .ts{ font-size:12.5px; font-weight:600; }
   .hist-meta .sum{ font-size:11.5px; color: var(--ink-soft); margin-top:2px; }
+  .hist-verdict{ font-size:11px; font-weight:700; padding:3px 8px; border-radius:12px; font-family:'IBM Plex Mono',monospace; margin-right:4px; white-space:nowrap; }
+  .hist-verdict.pass{ background:var(--teal-tint); color:var(--teal-dark); }
+  .hist-verdict.warn{ background:var(--amber-tint); color:var(--amber); }
+  .hist-verdict.fail{ background:var(--danger-tint); color:var(--danger); }
   .hist-del{ background:none; border:none; color:var(--danger); font-size:12px; cursor:pointer; padding:6px; }
   .empty-hist{ color: var(--ink-soft); font-size: 13px; text-align:center; padding: 40px 10px; }
 
@@ -169,6 +212,7 @@
   }
   .roadmap{ display:inline-flex; gap:14px; font-family:'IBM Plex Mono', monospace; font-size:10.5px; }
   .roadmap span{ color:#B7C0BB; }
+  .roadmap span.done{ color:#7C8A84; text-decoration:line-through; text-decoration-color:#D6DEDA; }
   .roadmap span.now{ background: linear-gradient(90deg,#1B6E63,#A93A2E); -webkit-background-clip:text; background-clip:text; color:transparent; font-weight:700; }
 </style>
 </head>
@@ -202,7 +246,7 @@
     <section id="view-scan" class="view active">
       <div class="capture" id="captureBox">
         <video id="video" playsinline muted style="display:none"></video>
-        <img id="preview" style="display:none" />
+        <img id="preview" style="display:none" alt="" />
         <div class="empty" id="captureEmpty" data-i18n="captureEmpty"></div>
         <div class="brackets">
           <svg viewBox="0 0 100 100" preserveAspectRatio="none">
@@ -212,11 +256,22 @@
             <path d="M14,100 L0,100 L0,86" />
           </svg>
         </div>
+        <div class="zoneframe" id="zoneFrame">
+          <div class="zf-box zA"><span>Anti-A</span></div>
+          <div class="zf-box zB"><span>Anti-B</span></div>
+          <div class="zf-box zD"><span>Anti-D</span></div>
+        </div>
+        <div class="hud" id="hud"></div>
       </div>
+
+      <p class="live-hint" id="liveHint" data-i18n="liveHint"></p>
 
       <div class="capture-controls">
         <button class="btn" id="btnCamera" data-i18n="btnCamera"></button>
         <button class="btn" id="btnUpload" data-i18n="btnUpload"></button>
+        <button class="btn primary hide" id="btnCapture" data-i18n="btnCapture"></button>
+        <button class="btn hide" id="btnFlash" data-i18n="btnFlash"></button>
+        <button class="btn hide" id="btnStop" data-i18n="btnStop"></button>
         <input type="file" id="fileInput" accept="image/*" capture="environment" />
       </div>
 
@@ -224,8 +279,12 @@
         <h3 data-i18n="qualityTitle"></h3>
         <div class="qrow"><span data-i18n="qBrightness"></span><span class="pill" id="qBrightnessVal">—</span></div>
         <div class="qrow"><span data-i18n="qSharpness"></span><span class="pill" id="qSharpnessVal">—</span></div>
-        <div class="qrow"><span data-i18n="qAlignment"></span><span class="pill warn" id="qAlignmentVal">—</span></div>
+        <div class="qrow"><span data-i18n="qGlare"></span><span class="pill" id="qGlareVal">—</span></div>
+        <div class="qrow"><span data-i18n="qContrast"></span><span class="pill" id="qContrastVal">—</span></div>
+        <div class="qrow"><span data-i18n="qStructure"></span><span class="pill" id="qStructureVal">—</span></div>
+        <div class="qrow"><span data-i18n="qResolution"></span><span class="pill" id="qResolutionVal">—</span></div>
         <div class="readiness" id="readinessBadge"></div>
+        <div class="privacy-line"><span>🔒</span><span data-i18n="privacyNote"></span></div>
       </div>
 
       <div class="zones" id="zonesBox" style="display:none">
@@ -235,6 +294,7 @@
       </div>
 
       <p class="note" id="scanNote" data-i18n="scanNote" style="display:none"></p>
+      <p class="note fail" id="failNote" data-i18n="failNote" style="display:none"></p>
 
       <div class="save-row" id="saveRow" style="display:none">
         <button class="btn primary" id="btnSave" data-i18n="btnSave"></button>
@@ -252,8 +312,8 @@
 
   <footer>
     <div class="roadmap">
-      <span class="now">● v0.1 UI</span>
-      <span>○ v0.2 Camera engine</span>
+      <span class="done">✓ v0.1 UI</span>
+      <span class="now">● v0.2 Camera engine</span>
       <span>○ v0.3 Card CV</span>
       <span>○ v0.4 Dataset</span>
       <span>○ v0.5 Agglutination ML</span>
@@ -272,56 +332,83 @@
   const STRINGS = {
     en: {
       disclaimer: "Prototype only — not a medical device. This app never diagnoses a blood type. Software development & demo purposes only.",
-      subtitle: "software prototype · phase 1 (UI)",
+      subtitle: "software prototype · phase 2 (camera engine)",
       tabScan: "Scan",
       tabHistory: "History",
       captureEmpty: "Line up a test card inside the brackets, or upload a photo.",
+      liveHint: "Live check running — hold the card steady inside the zone frame, then capture.",
       btnCamera: "📷 Open camera",
       btnUpload: "🖼 Upload photo",
-      qualityTitle: "Image quality (heuristic, not diagnostic)",
+      btnCapture: "● Capture & check",
+      btnFlash: "⚡ Flash",
+      btnFlashOff: "⚡ Flash off",
+      btnStop: "✕ Close camera",
+      qualityTitle: "Image quality (image checks only — not diagnostic)",
       qBrightness: "Brightness",
-      qSharpness: "Sharpness (approx.)",
-      qAlignment: "Card alignment",
+      qSharpness: "Sharpness",
+      qGlare: "Glare",
+      qContrast: "Contrast",
+      qStructure: "Card structure",
+      qResolution: "Resolution",
       zoneState: "not analyzed yet",
       scanNote: "Reaction-zone detection and interpretation are not implemented in this prototype — planned for phases 3, 5 and 6, and requiring proper clinical validation before any real use.",
+      failNote: "Quality check failed — this image is refused. Please retake it: better light, less glare, hold steady, keep the card filling the frame.",
       btnSave: "Save to history",
       btnDiscard: "Discard",
       emptyHist: "No scans saved yet.",
-      manualAlign: "manual — auto-detect planned",
-      good: "good", low: "low", high: "high", approx: "approx.",
+      good: "good", low: "low", high: "high", ok: "ok",
       delete: "Delete",
-      ready: "Image ready for the pipeline", retake: "Retake suggested",
-      statsTotal: "Scans saved", statsGood: "Good quality", statsLast: "Last scan"
+      verdictPass: "✓ Image OK — ready for pipeline",
+      verdictWarn: "↻ Acceptable — retake recommended",
+      verdictFail: "✕ Please retake the image",
+      privacyNote: "Processed locally in your browser — never uploaded.",
+      statsTotal: "Scans saved", statsGood: "Passed check", statsLast: "Last scan",
+      cameraError: "Camera access unavailable (permission/browser). Please upload a photo instead."
     },
     de: {
       disclaimer: "Nur Prototyp — kein Medizinprodukt. Diese App bestimmt niemals eine Blutgruppe. Nur für Softwareentwicklung & Demonstration.",
-      subtitle: "Software-Prototyp · Phase 1 (UI)",
+      subtitle: "Software-Prototyp · Phase 2 (Kamera-Engine)",
       tabScan: "Scan",
       tabHistory: "Verlauf",
       captureEmpty: "Testkarte innerhalb der Ecken ausrichten oder Foto hochladen.",
+      liveHint: "Live-Prüfung läuft — Karte ruhig im Zonenrahmen halten, dann aufnehmen.",
       btnCamera: "📷 Kamera öffnen",
       btnUpload: "🖼 Foto hochladen",
-      qualityTitle: "Bildqualität (Heuristik, keine Diagnose)",
+      btnCapture: "● Aufnehmen & prüfen",
+      btnFlash: "⚡ Blitz",
+      btnFlashOff: "⚡ Blitz aus",
+      btnStop: "✕ Kamera schließen",
+      qualityTitle: "Bildqualität (nur Bildprüfung — keine Diagnose)",
       qBrightness: "Helligkeit",
-      qSharpness: "Schärfe (ca.)",
-      qAlignment: "Kartenausrichtung",
+      qSharpness: "Schärfe",
+      qGlare: "Glanzreflexe",
+      qContrast: "Kontrast",
+      qStructure: "Kartenstruktur",
+      qResolution: "Auflösung",
       zoneState: "noch nicht analysiert",
       scanNote: "Die Erkennung und Interpretation der Reaktionszonen ist in diesem Prototyp nicht implementiert — geplant für Phase 3, 5 und 6, und erfordert vor jedem echten Einsatz eine ordentliche klinische Validierung.",
+      failNote: "Qualitätsprüfung fehlgeschlagen — dieses Bild wird abgelehnt. Bitte erneut aufnehmen: besseres Licht, weniger Reflexe, ruhig halten, Karte füllt den Rahmen.",
       btnSave: "In Verlauf speichern",
       btnDiscard: "Verwerfen",
       emptyHist: "Noch keine Scans gespeichert.",
-      manualAlign: "manuell — Auto-Erkennung geplant",
-      good: "gut", low: "niedrig", high: "hoch", approx: "ca.",
+      good: "gut", low: "niedrig", high: "hoch", ok: "ok",
       delete: "Löschen",
-      ready: "Bild bereit für die Pipeline", retake: "Erneut aufnehmen empfohlen",
-      statsTotal: "Scans gespeichert", statsGood: "Gute Qualität", statsLast: "Letzter Scan"
+      verdictPass: "✓ Bild OK — bereit für die Pipeline",
+      verdictWarn: "↻ Akzeptabel — Neuaufnahme empfohlen",
+      verdictFail: "✕ Bitte Bild erneut aufnehmen",
+      privacyNote: "Lokal im Browser verarbeitet — niemals hochgeladen.",
+      statsTotal: "Scans gespeichert", statsGood: "Prüfung bestanden", statsLast: "Letzter Scan",
+      cameraError: "Kamerazugriff nicht möglich (Berechtigung/Browser). Bitte stattdessen ein Foto hochladen."
     }
   };
 
   let lang = 'en';
   let currentDataUrl = null;
   let stream = null;
-  let lastReady = false;
+  let liveTimer = null;
+  let torchOn = false;
+  let torchable = false;
+  let lastReport = null;   // { metrics, checks, verdict } of the analyzed image
 
   function t(key){ return STRINGS[lang][key] || key; }
 
@@ -330,7 +417,7 @@
     document.querySelectorAll('[data-i18n]').forEach(el=>{ el.textContent = t(el.getAttribute('data-i18n')); });
     document.getElementById('lang-en').classList.toggle('active', lang==='en');
     document.getElementById('lang-de').classList.toggle('active', lang==='de');
-    document.getElementById('qAlignmentVal').textContent = t('manualAlign');
+    if(lastReport) renderQuality(lastReport);
     renderHistory();
   }
   document.getElementById('lang-en').onclick = ()=>{ lang='en'; applyI18n(); };
@@ -348,128 +435,272 @@
   tabHistBtn.onclick = ()=>{
     tabHistBtn.classList.add('active'); tabScanBtn.classList.remove('active');
     viewHist.classList.add('active'); viewScan.classList.remove('active');
+    stopCamera();
     renderHistory();
   };
 
-  // ---- capture ----
+  /* ================================================================
+     v0.2 CAMERA ENGINE
+     Camera -> original frame -> quality check. Local only.
+     ================================================================ */
+
   const video = document.getElementById('video');
   const preview = document.getElementById('preview');
   const captureEmpty = document.getElementById('captureEmpty');
   const fileInput = document.getElementById('fileInput');
+  const hud = document.getElementById('hud');
 
-  document.getElementById('btnUpload').onclick = ()=> fileInput.click();
+  const btnCamera = document.getElementById('btnCamera');
+  const btnUpload = document.getElementById('btnUpload');
+  const btnCapture = document.getElementById('btnCapture');
+  const btnFlash = document.getElementById('btnFlash');
+  const btnStop = document.getElementById('btnStop');
+
+  // ---------- quality metrics (see /lib/quality.ts, unit-tested) ----------
+  function computeMetrics(img){
+    const d = img.data, w = img.width, h = img.height, n = w * h;
+    const gray = new Float32Array(n);
+    let sum = 0, glarePx = 0;
+    for(let i = 0; i < n; i++){
+      const y = 0.299*d[i*4] + 0.587*d[i*4+1] + 0.114*d[i*4+2];
+      gray[i] = y; sum += y;
+      if(y >= 250) glarePx++;
+    }
+    const mean = sum / n;
+    let v = 0;
+    for(let i = 0; i < n; i++) v += (gray[i] - mean) ** 2;
+    const std = Math.sqrt(v / n);
+
+    let ls = 0, lsq = 0, cnt = 0, edges = 0;
+    for(let y = 1; y < h - 1; y++){
+      for(let x = 1; x < w - 1; x++){
+        const i = y * w + x;
+        const lap = 4*gray[i] - gray[i-1] - gray[i+1] - gray[i-w] - gray[i+w];
+        ls += lap; lsq += lap*lap; cnt++;
+        if(Math.abs(gray[i+1]-gray[i-1]) + Math.abs(gray[i+w]-gray[i-w]) > 60) edges++;
+      }
+    }
+    const lm = ls / cnt;
+    return {
+      mean: Math.round(mean),
+      contrast: Math.round(std),
+      glarePct: Math.round(100 * 100 * glarePx / n) / 100,
+      blurScore: Math.round(lsq / cnt - lm * lm),
+      edgePct: Math.round(100 * 100 * edges / cnt) / 100
+    };
+  }
+
+  function judgeQuality(m, resW, resH){
+    const checks = [];
+    const add = (name, value, state, hint)=>{
+      const word = state === 'pass' ? t('good') : state === 'warn' ? t('ok') : t('low');
+      checks.push({ name, value, state, label: value + ' · ' + word, hint: state !== 'pass' ? hint : '' });
+    };
+
+    const blurState = m.blurScore >= 60 ? 'pass' : m.blurScore >= 30 ? 'warn' : 'fail';
+    add('qSharpness', String(m.blurScore), blurState, t('low') + ' — ' + (lang==='de' ? 'ruhig halten, Fokus abwarten.' : 'hold steady, let focus lock.'));
+
+    const bState = m.mean < 45 ? 'fail' : m.mean < 65 ? 'warn' : m.mean > 235 ? 'fail' : m.mean > 215 ? 'warn' : 'pass';
+    add('qBrightness', m.mean + '/255', bState, (m.mean < 65 ? t('low') : t('high')) + ' — ' + (lang==='de' ? (m.mean < 65 ? 'mehr Licht.' : 'weniger Licht/Belichtung.') : (m.mean < 65 ? 'add light.' : 'reduce light/exposure.')));
+
+    const gState = m.glarePct >= 3 ? 'fail' : m.glarePct >= 1 ? 'warn' : 'pass';
+    add('qGlare', m.glarePct + '%', gState, lang==='de' ? 'Reflexe — Winkel ändern.' : 'Reflections — change angle.');
+
+    const cState = m.contrast < 20 ? 'fail' : m.contrast < 32 ? 'warn' : 'pass';
+    add('qContrast', String(m.contrast), cState, lang==='de' ? 'flaches Licht.' : 'flat lighting.');
+
+    const eState = m.edgePct >= 2.5 ? 'pass' : m.edgePct >= 1.2 ? 'warn' : 'fail';
+    add('qStructure', m.edgePct + '%', eState, lang==='de' ? 'keine kartenähnliche Struktur — Karte in den Rahmen legen.' : 'no card-like structure — place the card in the frame.');
+
+    const longest = Math.max(resW, resH);
+    const rState = longest >= 1280 ? 'pass' : longest >= 960 ? 'warn' : 'fail';
+    add('qResolution', resW + '×' + resH, rState, lang==='de' ? 'Auflösung zu niedrig.' : 'Resolution too low.');
+
+    const verdict = checks.some(c=>c.state==='fail') ? 'fail' : checks.some(c=>c.state==='warn') ? 'warn' : 'pass';
+    return { metrics: m, checks, verdict };
+  }
+
+  // ---------- live camera ----------
+  async function openCamera(){
+    try{
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } },
+        audio: false
+      });
+    }catch(err){
+      alert(t('cameraError'));
+      return;
+    }
+    video.srcObject = stream;
+    video.style.display = 'block';
+    preview.style.display = 'none';
+    captureEmpty.style.display = 'none';
+    await new Promise(r=>{ video.onloadedmetadata = r; });
+    await video.play();
+
+    try{
+      const caps = stream.getVideoTracks()[0].getCapabilities ? stream.getVideoTracks()[0].getCapabilities() : {};
+      torchable = 'torch' in caps;
+    }catch(e){ torchable = false; }
+
+    btnCamera.classList.add('hide');
+    btnUpload.classList.add('hide');
+    btnCapture.classList.remove('hide');
+    btnStop.classList.remove('hide');
+    btnFlash.classList.toggle('hide', !torchable);
+    document.getElementById('zoneFrame').classList.add('show');
+    document.getElementById('liveHint').classList.add('show');
+    hud.classList.add('show');
+    liveTimer = setInterval(liveCheck, 600);
+  }
+
+  function stopCamera(){
+    clearInterval(liveTimer); liveTimer = null;
+    if(stream){ stream.getTracks().forEach(tr=>tr.stop()); stream = null; }
+    torchOn = false;
+    video.style.display = 'none';
+    video.srcObject = null;
+    btnCamera.classList.remove('hide');
+    btnUpload.classList.remove('hide');
+    btnCapture.classList.add('hide');
+    btnStop.classList.add('hide');
+    btnFlash.classList.add('hide');
+    document.getElementById('zoneFrame').classList.remove('show');
+    document.getElementById('liveHint').classList.remove('show');
+    hud.classList.remove('show');
+    hud.innerHTML = '';
+  }
+
+  async function toggleFlash(){
+    if(!stream || !torchable) return;
+    const track = stream.getVideoTracks()[0];
+    try{
+      torchOn = !torchOn;
+      await track.applyConstraints({ advanced: [{ torch: torchOn }] });
+      btnFlash.textContent = torchOn ? t('btnFlashOff') : t('btnFlash');
+    }catch(e){ torchOn = false; }
+  }
+
+  const liveCanvas = document.createElement('canvas');
+  liveCanvas.width = 320; liveCanvas.height = 240;
+  const liveCtx = liveCanvas.getContext('2d', { willReadFrequently: true });
+
+  function liveCheck(){
+    if(!stream || !video.videoWidth) return;
+    liveCtx.drawImage(video, 0, 0, 320, 240);
+    const m = computeMetrics(liveCtx.getImageData(0, 0, 320, 240));
+    const r = judgeQuality(m, video.videoWidth, video.videoHeight);
+    const order = { fail: 0, warn: 1, pass: 2 };
+    hud.innerHTML = '';
+    [...r.checks].sort((a,b)=> order[a.state] - order[b.state]).forEach(c=>{
+      const chip = document.createElement('span');
+      chip.className = 'chip ' + c.state;
+      chip.textContent = t(c.name) + ' ' + c.value;
+      hud.appendChild(chip);
+    });
+  }
+
+  function captureNow(){
+    if(!stream || !video.videoWidth) return;
+    const c = document.createElement('canvas');
+    c.width = video.videoWidth; c.height = video.videoHeight;
+    c.getContext('2d').drawImage(video, 0, 0);
+    const dataUrl = c.toDataURL('image/jpeg', 0.85);
+    const resW = c.width, resH = c.height;
+    stopCamera();
+    showImage(dataUrl, resW, resH);
+  }
+
+  // ---------- upload ----------
+  btnUpload.onclick = ()=> fileInput.click();
   fileInput.addEventListener('change', (e)=>{
     const file = e.target.files[0];
     if(!file) return;
     stopCamera();
     const reader = new FileReader();
-    reader.onload = (ev)=>{ showImage(ev.target.result); };
+    reader.onload = (ev)=>{
+      const img = new Image();
+      img.onload = ()=> showImage(ev.target.result, img.naturalWidth, img.naturalHeight);
+      img.src = ev.target.result;
+    };
     reader.readAsDataURL(file);
+    fileInput.value = '';
   });
 
-  document.getElementById('btnCamera').onclick = async ()=>{
-    try{
-      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-      video.srcObject = stream;
-      video.style.display = 'block';
-      preview.style.display = 'none';
-      captureEmpty.style.display = 'none';
-      await video.play();
-      setTimeout(captureFrame, 600);
-    }catch(err){
-      alert(lang==='de'
-        ? 'Kamerazugriff nicht möglich (Berechtigung/Browser). Bitte stattdessen ein Foto hochladen.'
-        : 'Camera access unavailable (permission/browser). Please upload a photo instead.');
-    }
-  };
-
-  function captureFrame(){
-    if(!stream) return;
-    const c = document.createElement('canvas');
-    c.width = video.videoWidth || 640;
-    c.height = video.videoHeight || 480;
-    c.getContext('2d').drawImage(video, 0, 0, c.width, c.height);
-    showImage(c.toDataURL('image/jpeg', 0.85));
-    stopCamera();
-  }
-  function stopCamera(){
-    if(stream){ stream.getTracks().forEach(tr=>tr.stop()); stream=null; }
-    video.style.display = 'none';
-  }
-  function showImage(dataUrl){
+  // ---------- result ----------
+  function showImage(dataUrl, resW, resH){
     currentDataUrl = dataUrl;
     preview.src = dataUrl;
     preview.style.display = 'block';
     video.style.display = 'none';
     captureEmpty.style.display = 'none';
-    runQualityCheck(dataUrl);
+
+    const img = new Image();
+    img.onload = ()=>{
+      const scale = Math.min(1, 1280 / Math.max(resW, resH));
+      const w = Math.round(resW * scale), h = Math.round(resH * scale);
+      const c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      const ctx = c.getContext('2d', { willReadFrequently: true });
+      ctx.drawImage(img, 0, 0, w, h);
+      const report = judgeQuality(computeMetrics(ctx.getImageData(0, 0, w, h)), resW, resH);
+      lastReport = report;
+      renderQuality(report);
+    };
+    img.src = dataUrl;
   }
+
+  function renderQuality(report){
+    const ids = {
+      qSharpness: 'qSharpnessVal', qBrightness: 'qBrightnessVal', qGlare: 'qGlareVal',
+      qContrast: 'qContrastVal', qStructure: 'qStructureVal', qResolution: 'qResolutionVal'
+    };
+    const cls = { pass: 'pill good', warn: 'pill warn', fail: 'pill bad' };
+    report.checks.forEach(ch=>{
+      const el = document.getElementById(ids[ch.name]);
+      if(el){ el.textContent = ch.label; el.className = cls[ch.state]; }
+    });
+
+    const badge = document.getElementById('readinessBadge');
+    if(report.verdict === 'pass'){ badge.textContent = t('verdictPass'); badge.className = 'readiness ready'; }
+    else if(report.verdict === 'warn'){ badge.textContent = t('verdictWarn'); badge.className = 'readiness warn'; }
+    else { badge.textContent = t('verdictFail'); badge.className = 'readiness fail'; }
+
+    document.getElementById('qualityCard').style.display = 'block';
+    document.getElementById('scanNote').style.display = 'block';
+    document.getElementById('saveRow').style.display = 'flex';
+
+    // v0.2 design rule: a failing image is REFUSED, not analyzed.
+    const refused = report.verdict === 'fail';
+    document.getElementById('failNote').style.display = refused ? 'block' : 'none';
+    document.getElementById('zonesBox').style.display = refused ? 'none' : 'grid';
+    document.getElementById('btnSave').disabled = refused;
+  }
+
   document.getElementById('btnDiscard').onclick = resetCapture;
   function resetCapture(){
     currentDataUrl = null;
+    lastReport = null;
+    stopCamera();
     preview.style.display = 'none';
     captureEmpty.style.display = 'block';
     document.getElementById('qualityCard').style.display = 'none';
     document.getElementById('zonesBox').style.display = 'none';
     document.getElementById('scanNote').style.display = 'none';
+    document.getElementById('failNote').style.display = 'none';
     document.getElementById('saveRow').style.display = 'none';
   }
 
-  // ---- quality heuristic (image quality only — never a blood-type result) ----
-  function runQualityCheck(dataUrl){
-    const img = new Image();
-    img.onload = ()=>{
-      const size = 160;
-      const c = document.createElement('canvas');
-      c.width = size; c.height = size;
-      const ctx = c.getContext('2d');
-      ctx.drawImage(img, 0, 0, size, size);
-      const data = ctx.getImageData(0,0,size,size).data;
-
-      let sum = 0;
-      const gray = new Float32Array(size*size);
-      for(let i=0, p=0; i<data.length; i+=4, p++){
-        const g = 0.299*data[i] + 0.587*data[i+1] + 0.114*data[i+2];
-        gray[p] = g; sum += g;
-      }
-      const avgBrightness = sum / gray.length;
-
-      let edgeEnergy = 0, count = 0;
-      for(let y=0; y<size; y++){
-        for(let x=0; x<size-1; x++){
-          const idx = y*size+x;
-          edgeEnergy += Math.abs(gray[idx] - gray[idx+1]);
-          count++;
-        }
-      }
-      const sharpness = edgeEnergy / count;
-
-      let brightGood = true;
-      const brightPill = document.getElementById('qBrightnessVal');
-      if(avgBrightness < 60){ brightPill.textContent = t('low'); brightPill.className='pill warn'; brightGood=false; }
-      else if(avgBrightness > 205){ brightPill.textContent = t('high'); brightPill.className='pill warn'; brightGood=false; }
-      else { brightPill.textContent = t('good'); brightPill.className='pill good'; }
-
-      let sharpGood = true;
-      const sharpPill = document.getElementById('qSharpnessVal');
-      if(sharpness < 6){ sharpPill.textContent = t('low'); sharpPill.className='pill warn'; sharpGood=false; }
-      else { sharpPill.textContent = t('good') + ' (' + t('approx') + ')'; sharpPill.className='pill good'; }
-
-      lastReady = brightGood && sharpGood;
-      const badge = document.getElementById('readinessBadge');
-      badge.textContent = (lastReady ? '✓ ' : '↻ ') + (lastReady ? t('ready') : t('retake'));
-      badge.className = 'readiness ' + (lastReady ? 'ready' : 'retake');
-
-      document.getElementById('qualityCard').style.display = 'block';
-      document.getElementById('zonesBox').style.display = 'grid';
-      document.getElementById('scanNote').style.display = 'block';
-      document.getElementById('saveRow').style.display = 'flex';
-    };
-    img.src = dataUrl;
-  }
-
-  // ---- history (persisted via window.storage, personal / not shared) ----
+  // ---- history (localStorage — local only, nothing shared/uploaded) ----
   const HKEY = 'bloodscan:history';
+  function loadHistory(){
+    try{ const s = localStorage.getItem(HKEY); return s ? JSON.parse(s) : []; }
+    catch(e){ return []; }
+  }
+  function persistHistory(list){
+    try{ localStorage.setItem(HKEY, JSON.stringify(list)); }
+    catch(e){ console.error('storage error', e); }
+  }
   function thumb(dataUrl, cb){
     const img = new Image();
     img.onload = ()=>{
@@ -480,40 +711,32 @@
     };
     img.src = dataUrl;
   }
-  async function loadHistory(){
-    try{ const res = await window.storage.get(HKEY, false); return res ? JSON.parse(res.value) : []; }
-    catch(e){ return []; }
-  }
-  async function persistHistory(list){
-    try{ await window.storage.set(HKEY, JSON.stringify(list), false); }
-    catch(e){ console.error('storage error', e); }
-  }
 
-  document.getElementById('btnSave').onclick = async ()=>{
-    if(!currentDataUrl) return;
-    thumb(currentDataUrl, async (thumbUrl)=>{
-      const bp = document.getElementById('qBrightnessVal').textContent;
-      const sp = document.getElementById('qSharpnessVal').textContent;
-      const list = await loadHistory();
+  document.getElementById('btnSave').onclick = ()=>{
+    if(!currentDataUrl || !lastReport || lastReport.verdict === 'fail') return;
+    thumb(currentDataUrl, (thumbUrl)=>{
+      const m = lastReport.metrics;
+      const list = loadHistory();
       list.unshift({
         id: Date.now(),
         ts: new Date().toLocaleString(lang==='de' ? 'de-DE' : 'en-GB'),
         thumb: thumbUrl,
-        brightness: bp,
-        sharpness: sp,
-        ready: lastReady
+        verdict: lastReport.verdict,
+        blur: m.blurScore,
+        glare: m.glarePct,
+        bright: m.mean
       });
-      await persistHistory(list.slice(0, 50));
+      persistHistory(list.slice(0, 50));
       resetCapture();
       tabHistBtn.click();
     });
   };
 
-  async function renderHistory(){
+  function renderHistory(){
     const listEl = document.getElementById('historyList');
     const emptyEl = document.getElementById('emptyHist');
     const statsEl = document.getElementById('statsRow');
-    const list = await loadHistory();
+    const list = loadHistory();
 
     if(list.length === 0){
       statsEl.innerHTML = '';
@@ -523,7 +746,7 @@
     }
     emptyEl.style.display = 'none';
 
-    const goodCount = list.filter(x=>x.ready).length;
+    const goodCount = list.filter(x=>x.verdict === 'pass').length;
     const last = list[0];
     statsEl.innerHTML = `
       <div class="stat-card teal"><div class="num">${list.length}</div><div class="lbl">${t('statsTotal')}</div></div>
@@ -535,17 +758,18 @@
     list.forEach(item=>{
       const row = document.createElement('div');
       row.className = 'hist-item';
+      const vTxt = item.verdict === 'pass' ? '✓' : item.verdict === 'warn' ? '↻' : '✕';
       row.innerHTML = `
         <img src="${item.thumb}" alt="" />
         <div class="hist-meta">
           <div class="ts">${item.ts}</div>
-          <div class="sum">${t('qBrightness')}: ${item.brightness} · ${t('qSharpness')}: ${item.sharpness}</div>
+          <div class="sum">${t('qSharpness')} ${item.blur ?? '—'} · ${t('qGlare')} ${item.glare ?? '—'}% · ${t('qBrightness')} ${item.bright ?? '—'}</div>
         </div>
+        <span class="hist-verdict ${item.verdict}">${vTxt}</span>
         <button class="hist-del" data-id="${item.id}">${t('delete')}</button>
       `;
-      row.querySelector('.hist-del').onclick = async ()=>{
-        const cur = await loadHistory();
-        await persistHistory(cur.filter(x=>x.id !== item.id));
+      row.querySelector('.hist-del').onclick = ()=>{
+        persistHistory(loadHistory().filter(x=>x.id !== item.id));
         renderHistory();
       };
       listEl.appendChild(row);
@@ -641,6 +865,12 @@
       });
     }catch(e){ console.warn('3D hero skipped:', e); }
   }
+
+  // ---- wire up ----
+  btnCamera.onclick = openCamera;
+  btnCapture.onclick = captureNow;
+  btnStop.onclick = ()=>{ stopCamera(); if(!currentDataUrl){ preview.style.display='none'; captureEmpty.style.display='block'; } };
+  btnFlash.onclick = toggleFlash;
 
   applyI18n();
   initHero();
